@@ -14,7 +14,7 @@ class Particle:
         self.bestFit = fit
         self.worstFit = fit
         self.bestPosition = position
-        self.worstPosition = []
+        self.worstPosition = position
 
 
     # 更新速度
@@ -34,6 +34,10 @@ class Particle:
         if fit < self.bestFit:
             self.bestFit = fit
             self.bestPosition = self.position
+
+        if fit > self.worstFit:
+            self.worstFit = fit
+            self.worstPosition = self.position
 
 
     def getSpeed(self):

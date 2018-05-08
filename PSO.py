@@ -2,6 +2,7 @@ import numpy as np
 import ServiceSimulate
 import random
 import Particle
+import math
 
 # 粒子群列表
 particles = []
@@ -20,15 +21,27 @@ bestFit = 100
 bestPosition = []
 
 
+# 全局最差粒子位置和其目标函数
+worstFit = 0
+worstPosition = []
+
+
+
 # 粒子群算法参数
 W = 1
 C1 = 2
 C2 = 2
 
 
+D_HIGH = 0.6
+D_LOW = 0.4
+
+
+
 
 def init():
     global bestFit
+    global worstFit
     taskNum = simulate.tasksSize()
 
     for i in range(PARTICLE_NUM):
@@ -47,6 +60,11 @@ def init():
             bestFit = nowTargetFunc
             global bestPosition
             bestPosition = position
+
+        if nowTargetFunc > worstFit:
+            worstFit = nowTargetFunc
+            global worstPosition
+            worstPosition = position
 
 
 # 计算适应度函数
@@ -84,25 +102,63 @@ def updatePosition(particle):
 # 基础粒子群
 def mainPart():
 
-    global bestFit
+    global bestFit, worstFit
+    global worstPosition, bestPosition
     for i in range(MAX_TIMES):
 
-        for p in particles:
-            newSpeed = calculateSpeed(p)
-            p.updateSpeed(newSpeed)
-            updatePosition(p)
-            newFit = calculateTargetFunc(p.getPosition())
-            if newFit <= bestFit:
-                bestFit = newFit
-                global bestPosition
-                bestPosition = p.getPosition()
+        diversity = calculateDiversity()
+        if diversity > D_HIGH:
+            for p in particles:
+                newSpeed = calculateSpeed(p)
+                p.updateSpeed(newSpeed)
+                updatePosition(p)
+                newFit = calculateTargetFunc(p.getPosition())
+                if newFit <= bestFit:
+                    bestFit = newFit
+                    bestPosition = p.getPosition()
 
-            p.updateFit(newFit)
+                if newFit >= worstFit:
+                    worstFit = newFit
+                    worstPosition = p.getPosition()
+
+                p.updateFit(newFit)
+
+        elif diversity < D_LOW:
+            for p in particles:
+                newSpeed = calculateSpeedExclude(p)
+                p.updateSpeed(newSpeed)
+                updatePosition(p)
+                newFit = calculateTargetFunc(p.getPosition())
+                if newFit <= bestFit:
+                    bestFit = newFit
+                    bestPosition = p.getPosition()
+
+                if newFit >= worstFit:
+                    worstFit = newFit
+                    worstPosition = p.getPosition()
+
+                p.updateFit(newFit)
+
+        else:
+            for p in particles:
+                speed = p.speed
+                p.updateSpeed(speed)
+                updatePosition(p)
+                newFit = calculateTargetFunc(p.getPosition())
+                if newFit <= bestFit:
+                    bestFit = newFit
+                    bestPosition = p.getPosition()
+
+                if newFit >= worstFit:
+                    worstFit = newFit
+                    worstPosition = p.getPosition()
+
+                p.updateFit(newFit)
 
         print(bestFit)
 
 
-# 粒子群算法计算速度
+# 粒子群算法计算速度,吸引
 def calculateSpeed(particle):
     speed = particle.getSpeed()
     position = particle.getPosition()
@@ -113,6 +169,64 @@ def calculateSpeed(particle):
     part3 = np.floor(C2 * random.random() * (bestPosition - position))
     newSpeed = part1 + part2 + part3
     return newSpeed
+
+
+# 粒子群算法计算速度，排斥操作
+def calculateSpeedExclude(particle):
+    speed = particle.getSpeed()
+    position = particle.getPosition()
+    singleWorstPos = particle.worstPosition
+
+    part1 = np.floor(W * speed)
+    part2 = np.floor(C1 * random.random() * (singleWorstPos - position))
+    part3 = np.floor(C2 * random.random() * (worstPosition - position))
+    newSpeed = part1 - part2 - part3
+    return newSpeed
+
+
+
+
+
+
+
+
+# 计算种群多样性
+def calculateDiversity():
+    P = len(particles)          # 种群数量
+
+    L = 0;                      # 搜索空间对角线长度
+    for i in range(simulate.tasksSize()):
+        t = simulate.getTasks(i)
+        L = L + pow(t.lastStartTime - t.expectedStartTime, 2)
+
+    L = math.sqrt(L)
+
+
+
+    length = simulate.tasksSize()
+    initS = []
+    for i in range(length):
+        initS.append(0)
+
+
+    S = np.array(initS)         #  粒子的平均向量
+    for particle in particles:
+        S = S + particle.position
+    S = S / P
+
+
+    sum = 0
+    for particle in particles:
+        subSum = 0
+        for i in range(length):
+            num = particle.position[i]
+            subSum = subSum + pow(num - S[i], 2)
+
+        sum = sum + math.sqrt(subSum)
+
+    return sum / (L * P)
+
+
 
 
 
