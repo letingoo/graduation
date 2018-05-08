@@ -132,4 +132,4 @@ print(bestPosition)
 
 plt.plot(resultArray)
 plt.show()
-print( simulate.checkBussinessConflict(bestPosition) )
+print(simulate.checkBussinessConflict(bestPosition))
