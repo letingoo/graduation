@@ -116,11 +116,10 @@ def calculateSpeed(particle):
 
 
 
-
 init()
 
 testPos = [1, 4, 3, 1, 2, 10, 10, 10, 18, 19, 10, 8, 2]
-simulate.checkBussinessConflict(testPos)
+#simulate.checkBussinessConflict(testPos)
 
 print("done")
 mainPart()
