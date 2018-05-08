@@ -2,7 +2,7 @@ import numpy as np
 import ServiceSimulate
 import random
 import Particle
-
+import matplotlib.pyplot as plt
 # 粒子群列表
 particles = []
 
@@ -26,6 +26,7 @@ C1 = 2
 C2 = 2
 
 
+resultArray = []
 
 def init():
     global bestFit
@@ -85,6 +86,7 @@ def updatePosition(particle):
 def mainPart():
 
     global bestFit
+    currentLevelBestFit = 100
     for i in range(MAX_TIMES):
 
         for p in particles:
@@ -97,9 +99,12 @@ def mainPart():
                 global bestPosition
                 bestPosition = p.getPosition()
 
-            p.updateFit(newFit)
+            if newFit <= currentLevelBestFit:
+                currentLevelBestFit = newFit
 
-        print(bestFit)
+            p.updateFit(newFit)
+        resultArray.append(currentLevelBestFit)
+        #print(currentLevelBestFit)
 
 
 # 粒子群算法计算速度
@@ -118,11 +123,13 @@ def calculateSpeed(particle):
 
 init()
 
-testPos = [1, 4, 3, 1, 2, 10, 10, 10, 18, 19, 10, 8, 2]
+#testPos = [1, 4, 3, 1, 2, 10, 10, 10, 18, 19, 10, 8, 2]
 #simulate.checkBussinessConflict(testPos)
 
 print("done")
 mainPart()
 print(bestPosition)
 
+plt.plot(resultArray)
+plt.show()
 print( simulate.checkBussinessConflict(bestPosition) )
