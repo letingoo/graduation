@@ -42,8 +42,9 @@ def init():
         position = np.array(positionList)
         speed = position // 2
         particles.append(Particle.Particle(position, speed, calculateTargetFunc(position)))
-        if calculateTargetFunc(position) < bestFit:
-            bestFit = calculateTargetFunc(position)
+        nowTargetFunc = calculateTargetFunc(position)
+        if nowTargetFunc < bestFit:
+            bestFit = nowTargetFunc
             global bestPosition
             bestPosition = position
 
@@ -54,6 +55,8 @@ def calculateTargetFunc(position):
 
     for i in range(len(position)):
         total += position[i] - simulate.getTasks(i).getStartTime()
+
+    total = total + simulate.penaltyFunction(position)
 
     return total / simulate.tasksSize()
 
@@ -115,6 +118,10 @@ def calculateSpeed(particle):
 
 
 init()
+
+testPos = [1, 4, 3, 1, 2, 10, 10, 10, 18, 19, 10, 8, 2]
+simulate.checkBussinessConflict(testPos)
+
 print("done")
 mainPart()
 print(bestPosition)
